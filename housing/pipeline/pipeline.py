@@ -6,6 +6,11 @@ from housing.entity.artifact_entity import DataIngestionArtifact
 from housing.entity.config_entity import DataIngestionConfig
 from housing.component.data_ingestion import DataIngestion
 
+from housing.entity.artifact_entity import DataValidationArtifact,DataTransformationArtifact
+from housing.entity.config_entity import DataValidationConfig
+from housing.component.data_validation import DataValidation
+
+from housing.component.data_transformation import DataTransformation
 import os,sys
 
 
@@ -26,11 +31,28 @@ class Pipeline:
         except Exception as e:
             raise HousingExceptions(e,sys) from e
 
-    def start_data_validation(self):
-        pass
+    def start_data_validation(self,data_ingetsion_artifact: DataIngestionArtifact)-> DataValidationArtifact:
+        try:
+            data_validation = DataValidation(data_validation_config=self.config.get_data_validation_config(),
+                                             data_ingestion_artifact=data_ingetsion_artifact)
 
-    def start_data_transformation(self):
-        pass
+            return data_validation.initiate_data_validation()
+        except Exception as e:
+            raise HousingExceptions(e,sys) from e
+
+    def start_data_transformation(self,data_ingestion_artifact:DataIngestionArtifact, 
+                    data_validation_artifact:DataValidationArtifact)-> DataTransformationArtifact:
+        try:
+            data_transformation = DataTransformation(
+                data_transformation_config= self.config.get_data_transformation_config(), 
+                data_ingestion_artifact= data_ingestion_artifact, 
+                data_validation_artifact= data_validation_artifact
+            )
+
+            return data_transformation.initiate_data_transformation()
+
+        except Exception as e:
+            raise HousingExceptions(e,sys) from e
 
     def start_model_trainer(self):
         pass
@@ -46,7 +68,12 @@ class Pipeline:
         try:
             #data ingestion
             data_ingestion_artifact = self.start_data_ingestion()
-
+            data_validation_artifact = self.start_data_validation(data_ingetsion_artifact=data_ingestion_artifact)
+            data_transformation_artifact = self.start_data_transformation(
+                data_ingestion_artifact= data_ingestion_artifact, 
+                data_validation_artifact =data_validation_artifact
+            )
+            
         except Exception as e:
             raise HousingExceptions(e,sys) from e
 

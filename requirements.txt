@@ -4,4 +4,6 @@ scikit-learn
 pandas
 numpy
 PyYAML
+evidently
+dill
 -e .
